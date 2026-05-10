@@ -19,7 +19,7 @@ const files: FileItem[] = [
   {
     name: "about.txt",
     description:
-      "saif alshawaf\n\nsoftware engineering student focused on frontend development, game systems, interactive experiences, and digital aesthetics.\n\ni like to build things\ntake a look at what i've been up to",
+      "saif alshawaf\n\nsoftware engineering student focused on frontend development, game systems, interactive experiences, and digital aesthetics.\n\ni like to build things",
     icon: "/icons/note.png",
    position: "lg:absolute lg:left-340 lg:top-100",
   },
