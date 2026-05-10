@@ -81,7 +81,7 @@ const files: FileItem[] = [
   {
     name: "linkedin.url",
     icon: "/icons/linkedin.png",
-    external: "https://linkedin.com/in/saifalshawaf",
+    external: "https://linkedin.com/in/saif-alshawaf",
     description: "",
      position: "lg:absolute lg:left-230 lg:top-60",
       iconSize: "w-12 h-12",
