@@ -11,6 +11,7 @@ type FileItem = {
   stack?: string[];
   notes?: string[];
   playUrl?: string;
+  external?: string;
   screenshots?: string[];
 };
 
@@ -67,6 +68,24 @@ const files: FileItem[] = [
     ],
     screenshots: ["/media/healthcare-preview-1.png", "/media/healthcare-preview-2.png"],
   },
+  {
+    name: "github.url",
+    icon: "/icons/git.png",
+    external: "https://github.com/saifnot-safe",
+    description: "",
+    position: "lg:absolute lg:left-265 lg:top-40",
+     iconSize: "w-12 h-12",
+    
+    
+  },
+  {
+    name: "linkedin.url",
+    icon: "/icons/linkedin.png",
+    external: "https://linkedin.com/in/saifalshawaf",
+    description: "",
+     position: "lg:absolute lg:left-230 lg:top-60",
+      iconSize: "w-12 h-12",
+  }
 ];
 
 export default function Home() {
@@ -109,6 +128,11 @@ export default function Home() {
 
   function openFile(file: FileItem) {
     const isMobile = mobile();
+
+    if (file.external) {
+      window.open(file.external, "_blank");
+      return;
+    }
 
     setWindowPosition({
       top: isMobile ? 100 : Math.random() * 200 + 80,
@@ -266,7 +290,7 @@ export default function Home() {
 
       {/* system text */}
       <div className="absolute z-10 bottom-4 right-4 text-xs opacity-30">
-        saifarchive.local
+        saifarchive.xyz
       </div>
     </main>
   );
