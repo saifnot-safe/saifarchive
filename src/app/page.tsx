@@ -10,10 +10,16 @@ type FileItem = {
   position?: string;
   stack?: string[];
   notes?: string[];
-  playUrl?: string;
+  link?: { label: string; href: string };
   external?: string;
   screenshots?: string[];
 };
+
+// layout constants — keep these in sync with the window classes below
+const MOBILE_BREAKPOINT = 900;
+const MAIN_WINDOW_WIDTH = 420;
+const IMAGE_WINDOW_WIDTH = 420;
+const EDGE_GAP = 24;
 
 const files: FileItem[] = [
   {
@@ -21,15 +27,17 @@ const files: FileItem[] = [
     description:
       "saif alshawaf\n\nsoftware engineering student focused on frontend development, game systems, interactive experiences, and digital aesthetics.\n\ni like to build things",
     icon: "/icons/note.png",
-   position: "lg:absolute lg:left-340 lg:top-100",
+    position: "lg:absolute lg:left-340 lg:top-100",
   },
+
+  // flagship projects (custom logo icons)
   {
     name: "kittyxcarson.url",
     description: "survival platformer featuring Hello Kitty and lean",
     icon: "/icons/Kitty-Carson-icon.png",
     iconSize: "w-14 h-14",
     stack: ["html", "css", "javascript"],
-    playUrl: "https://kittyxcarson.xyz",
+    link: { label: "play now", href: "https://kittyxcarson.xyz" },
     notes: [
       "inspired by analog horror and artist Ken Carson",
       "fight endlessly spawning entities while upgrading health, attack, range, reload speed, and knockback",
@@ -37,6 +45,34 @@ const files: FileItem[] = [
     ],
     screenshots: ["/media/kitty-preview-1.png", "/media/kitty-preview-2.png"],
   },
+  {
+    name: "timbi.url",
+    description: "campus free-food finder for western students\n\nsolo build",
+    icon: "/icons/timbi.png", 
+    iconSize: "w-14 h-14",
+    stack: ["next.js", "supabase", "clerk", "leaflet", "tailwind"],
+    link: { label: "open site", href: "https://timbi.app" }, 
+    notes: [
+      "openai pulls free-food posts from club instagrams",
+      "redesigned from a carousel into a split list/map view",
+      "tracked down a floating-point bug in leaflet's flyTo",
+    ],
+    screenshots: ["/media/timbi-preview-1.png", "/media/timbi-preview-2.png"], 
+  },
+  {
+    name: "faybl.apk",
+    description:
+      "story-driven audio running app\n\nfrontend dev alongside the founders",
+    icon: "/icons/faybl.png",
+    iconSize: "w-14 h-14",
+    stack: ["react", "tailwind"],
+    notes: [
+      "designed app onboarding system: accent colours and motifs over a shared layout skeleton",
+      "redesigned the home and profile screen implementing a bookshelf concept",
+    ],
+  },
+
+  // smaller projects (shared folder sprite)
   {
     name: "soulseek.exe",
     description: "turn based combat pirate game",
@@ -66,77 +102,91 @@ const files: FileItem[] = [
       "worked with react navigation and nativewind",
       "contributed to patient and doctor dashboard flows",
     ],
-    screenshots: ["/media/healthcare-preview-1.png", "/media/healthcare-preview-2.png"],
+    screenshots: [
+      "/media/healthcare-preview-1.png",
+      "/media/healthcare-preview-2.png",
+    ],
   },
+
+  // links
   {
     name: "github.url",
-    icon: "/icons/git.png",
-    external: "https://github.com/saifnot-safe",
     description: "",
+    icon: "/icons/git.png",
+    iconSize: "w-12 h-12",
+    external: "https://github.com/saifnot-safe",
     position: "lg:absolute lg:left-265 lg:top-40",
-     iconSize: "w-12 h-12",
-    
-    
   },
   {
     name: "linkedin.url",
-    icon: "/icons/linkedin.png",
-    external: "https://linkedin.com/in/saif-alshawaf",
     description: "",
-     position: "lg:absolute lg:left-230 lg:top-60",
-      iconSize: "w-12 h-12",
-  }
+    icon: "/icons/linkedin.png",
+    iconSize: "w-12 h-12",
+    external: "https://linkedin.com/in/saif-alshawaf",
+    position: "lg:absolute lg:left-230 lg:top-60",
+  },
 ];
+
+// reads the viewport directly — safe to call inside timeouts and event handlers
+function isMobileViewport() {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
+// random spot that keeps a window of `width` fully on screen
+function randomLeft(width: number, minLeft: number) {
+  const maxLeft = Math.max(minLeft, window.innerWidth - width - EDGE_GAP);
+  return minLeft + Math.random() * (maxLeft - minLeft);
+}
+
+function randomTop(minTop: number, range: number) {
+  return minTop + Math.random() * range;
+}
 
 export default function Home() {
   const [booting, setBooting] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [activeFile, setActiveFile] = useState<FileItem | null>(null);
   const [openImages, setOpenImages] = useState<
     { src: string; top: number; left: number }[]
   >([]);
-  const [windowPosition, setWindowPosition] = useState({
-    top: 120,
-    left: 400,
-  });
+  const [windowPosition, setWindowPosition] = useState({ top: 120, left: 400 });
 
-  function mobile() {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 900;
-  }
+  // keep isMobile in sync with the viewport so layout updates on resize
+  useEffect(() => {
+    const update = () => setIsMobile(isMobileViewport());
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
-  function finishBoot() {
-    const aboutFile = files.find((file) => file.name === "about.txt") ?? null;
-    const isMobile = mobile();
-
-    setWindowPosition({
-      top: isMobile ? 20 : 120,
-      left: isMobile ? 16 : 420,
-    });
-
-    setBooting(false);
-    setActiveFile(aboutFile);
-    setOpenImages([]);
-  }
-
+  // boot screen, then open about.txt
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      finishBoot();
+      const mobile = isMobileViewport();
+      setWindowPosition({
+        top: mobile ? 20 : 120,
+        left: mobile ? 16 : Math.min(420, randomLeft(MAIN_WINDOW_WIDTH, 200)),
+      });
+      setActiveFile(files.find((file) => file.name === "about.txt") ?? null);
+      setOpenImages([]);
+      setBooting(false);
     }, 3200);
 
     return () => window.clearTimeout(timer);
   }, []);
 
   function openFile(file: FileItem) {
-    const isMobile = mobile();
-
     if (file.external) {
-      window.open(file.external, "_blank");
+      window.open(file.external, "_blank", "noopener,noreferrer");
       return;
     }
 
+    const mobile = isMobileViewport();
+
     setWindowPosition({
-      top: isMobile ? 100 : Math.random() * 200 + 80,
-      left: isMobile ? 16 : Math.random() * 500 + 200,
+      top: mobile ? 100 : randomTop(80, 200),
+      left: mobile ? 16 : randomLeft(MAIN_WINDOW_WIDTH, 200),
     });
 
     setActiveFile(file);
@@ -144,8 +194,8 @@ export default function Home() {
     setOpenImages(
       (file.screenshots ?? []).map((src, index) => ({
         src,
-        top: isMobile ? 140 + index * 24 : Math.random() * 300 + 80,
-        left: isMobile ? 16 : Math.random() * 500 + 80,
+        top: mobile ? 140 + index * 24 : randomTop(80, 300),
+        left: mobile ? 16 : randomLeft(IMAGE_WINDOW_WIDTH, 80),
       }))
     );
   }
@@ -154,21 +204,23 @@ export default function Home() {
     setActiveFile(null);
   }
 
+  function closeImage(index: number) {
+    setOpenImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
   if (booting) {
     return (
       <main className="w-screen h-screen bg-black text-white flex items-center justify-center font-[family-name:var(--font-geist-mono)]">
         <div className="text-center text-sm tracking-wide">
           <div className="mb-4 text-lg">SAIF ARCHIVE</div>
-          <div className="typewriter opacity-60 mx-auto">
-            loading artifacts...
-          </div>
+          <div className="typewriter opacity-60 mx-auto">loading artifacts...</div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="relative w-screen min-h-screen overflow-x-hidden bg-black text-white overflow-hidden p-6 font-[family-name:var(--font-geist-mono)]">
+    <main className="relative w-screen min-h-screen overflow-hidden bg-black text-white p-6 font-[family-name:var(--font-geist-mono)]">
       {/* texture */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.00] bg-[url('/noise.png')]" />
 
@@ -185,7 +237,6 @@ export default function Home() {
               alt={file.name}
               className={`${file.iconSize ?? "w-10 h-10"} mb-1 object-contain pixelated`}
             />
-
             <div className="text-xs text-center leading-tight">{file.name}</div>
           </button>
         ))}
@@ -195,21 +246,17 @@ export default function Home() {
       {activeFile && (
         <div
           className={`${
-            mobile() ? "relative -mt-[75px]" : "absolute"
-          } z-20 w-[92vw] max-w-[420px] md:w-[600px] border border-white/30 bg-black/90 backdrop-blur-[1px]`}
+            isMobile ? "relative -mt-[75px]" : "absolute"
+          } z-20 w-[92vw] max-w-[420px] border border-white/30 bg-black/90 backdrop-blur-[1px]`}
           style={
-            mobile()
+            isMobile
               ? {}
-              : {
-                  top: `${windowPosition.top}px`,
-                  left: `${windowPosition.left}px`,
-                }
+              : { top: `${windowPosition.top}px`, left: `${windowPosition.left}px` }
           }
         >
           {/* top bar */}
           <div className="flex items-center justify-between border-b border-white/20 px-3 py-2 text-sm">
             <span>{activeFile.name}</span>
-
             <button onClick={closeMainWindow} className="hover:opacity-60">
               ×
             </button>
@@ -217,7 +264,7 @@ export default function Home() {
 
           {/* content */}
           <div className="p-3 landscape:p-2 md:p-4">
-           <p className="text-xs md:text-sm opacity-60 mb-3 landscape:mb-2 whitespace-pre-line">
+            <p className="text-xs md:text-sm opacity-60 mb-3 landscape:mb-2 whitespace-pre-line">
               {activeFile.description}
             </p>
 
@@ -235,14 +282,14 @@ export default function Home() {
               </ul>
             )}
 
-            {activeFile.playUrl && (
+            {activeFile.link && (
               <a
-                href={activeFile.playUrl}
+                href={activeFile.link.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block border border-white/30 px-3 py-2 text-xs hover:bg-white hover:text-black transition"
               >
-                play now
+                {activeFile.link.label}
               </a>
             )}
           </div>
@@ -254,26 +301,15 @@ export default function Home() {
         <div
           key={`${image.src}-${index}`}
           className={`${
-            mobile() ? "relative mt-3" : "absolute"
+            isMobile ? "relative mt-3" : "absolute"
           } z-30 w-[92vw] max-w-[520px] md:w-[420px] border border-white/30 bg-black/90 backdrop-blur-[1px]`}
           style={
-            mobile()
-              ? {}
-              : {
-                  top: `${image.top}px`,
-                  left: `${image.left}px`,
-                }
+            isMobile ? {} : { top: `${image.top}px`, left: `${image.left}px` }
           }
         >
           <div className="flex items-center justify-between border-b border-white/20 px-3 py-2 text-sm">
             <span>{image.src.split("/").pop()}</span>
-
-            <button
-              onClick={() =>
-                setOpenImages((prev) => prev.filter((_, i) => i !== index))
-              }
-              className="hover:opacity-60"
-            >
+            <button onClick={() => closeImage(index)} className="hover:opacity-60">
               ×
             </button>
           </div>
